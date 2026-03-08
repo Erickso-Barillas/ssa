@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SCSA – Control de Selección Aleatoria</title>
+    
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="32x32" href="Icono/favicon-32x32.png">
+<link rel="apple-touch-icon" href="Icono/apple-icon-180x180.png">
+<meta name="theme-color" content="#0f172a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <style>
+        :root {
+            --primario: #0f172a; 
+            --acento: #B0C4DE; 
+            --fondo: #f8f7f2; 
+            --azul-pavo-mate: #1e293b; 
+            --blanco: #ffffff;
+            --texto: #334155; 
+            --gris-claro: #f1f5f9;
+            --gris-arena: #f2f2ed; 
+            --borde-suave: #e2e8f0;
+        }
+
+        body { font-family: 'Segoe UI', sans-serif; background: var(--fondo); margin: 0; padding: 10px; color: var(--texto); }
+        .contenedor { max-width: 600px; margin: auto; background: var(--blanco); padding: 25px; border-radius: 24px; box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08); }
+        h1 { color: var(--primario); font-size: 16px; text-align: center; text-transform: uppercase; border-bottom: 2px solid var(--acento); padding-bottom: 15px; margin-bottom: 25px; letter-spacing: 1.5px; }
+        .selector-unidades { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px; margin-bottom: 20px; }
+        .btn-tipo { padding: 14px 5px; font-weight: 700; border: 1px solid var(--borde-suave); border-radius: 12px; background: var(--blanco); color: var(--primario); cursor: pointer; text-transform: uppercase; font-size: 10px; transition: 0.3s; }
+        .btn-tipo.activo { background: var(--primario); color: var(--acento); border-color: var(--primario); }
+        .resultados { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 20px; }
+        .carta { background: var(--blanco); border-radius: 16px; border: 1px solid var(--borde-suave); overflow: hidden; animation: appear 0.4s ease-out forwards; }
+        .imagen-contenedor { width: 100%; aspect-ratio: 1/1; background: #fff; display: flex; align-items: center; justify-content: center; padding: 8px; }
+        .carta img { max-width: 85%; max-height: 85%; object-fit: contain; }
+        .carta-info { padding: 8px 5px; text-align: center; font-size: 9px; font-weight: 700; color: var(--primario); text-transform: uppercase; }
+        .btn-girar { width: 100%; padding: 18px; font-size: 13px; font-weight: 800; background: var(--acento); color: var(--primario); border: none; border-radius: 14px; margin-top: 25px; cursor: pointer; display: none; text-transform: uppercase; letter-spacing: 2px; }
+        .detalle-dia { display: none; margin-top: 15px; border-top: 1px solid var(--borde-suave); padding-top: 15px; overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; font-size: 11px; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
+        th { text-align: left; padding: 14px 15px; background-color: var(--primario); color: var(--acento); text-transform: uppercase; letter-spacing: 1px; font-size: 9px; font-weight: 800; }
+        td { text-align: left; padding: 12px 15px; vertical-align: middle; color: var(--texto); border-bottom: 1px solid rgba(0,0,0,0.03); }
+        tr:nth-child(odd) td { background-color: var(--blanco); }
+        tr:nth-child(even) td { background-color: var(--gris-arena); }
+        .col-hora { width: 85px; font-weight: 700; }
+        .col-unidad { width: 95px; font-weight: 600; }
+        .col-inspeccion { line-height: 1.5; font-size: 10px; }
+        .control-historial { margin-top: 35px; text-align: center; border-top: 1px solid var(--borde-suave); padding-top: 25px; }
+        .btn-ver-historial { background: var(--blanco); border: 1.5px solid var(--primario); color: var(--primario); padding: 10px 28px; border-radius: 25px; font-size: 11px; font-weight: 700; cursor: pointer; text-transform: uppercase; }
+        .btn-ver-historial.abierto { background: var(--primario); color: var(--acento); }
+        #moduloHistorial { display: none; margin-top: 20px; text-align: left; }
+        .acordeon-item { margin-bottom: 10px; border: 1px solid var(--borde-suave); border-radius: 14px; overflow: hidden; background: #fff; }
+        .acordeon-header { background: var(--gris-claro); padding: 12px 18px; cursor: pointer; font-size: 12px; font-weight: 700; color: var(--primario); display: flex; justify-content: space-between; align-items: center; }
+        .acordeon-cuerpo { display: none; padding: 18px; background: white; border-top: 1px solid var(--gris-claro); }
+        .grid-dias { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+        .btn-dia { aspect-ratio: 1; border-radius: 10px; border: 1px solid var(--borde-suave); background: var(--blanco); font-size: 11px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .btn-dia.activo { background: var(--acento); color: var(--primario); border-color: var(--acento); }
+        footer { margin-top: 35px; text-align: center; font-size: 10px; color: #94a3b8; padding-bottom: 15px; }
+        @keyframes appear { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+<div class="contenedor">
+    <h1>SCSA – Sistema de Control de Selección Aleatoria</h1>
+    
+    <div class="selector-unidades">
+        <button class="btn-tipo" onclick="iniciarSeleccion('panel', this)">Panel</button>
+        <button class="btn-tipo" onclick="iniciarSeleccion('pickup', this)">Pick-up</button>
+        <button class="btn-tipo" onclick="iniciarSeleccion('mulita', this)">Mulita</button>
+        <button class="btn-tipo" onclick="iniciarSeleccion('camion', this)">Camión</button>
+        <button class="btn-tipo" onclick="iniciarSeleccion('golf', this)">Golf</button>
+    </div>
+
+    <div id="pantalla"><div id="resultados" class="resultados"></div></div>
+    <button id="btnGirar" class="btn-girar" onclick="girar()">Selección Aleatoria de Tarjeta</button>
+
+    <div class="control-historial">
+        <button id="toggleBtn" class="btn-ver-historial" onclick="toggleModuloHistorial()">Consultar Registros</button>
+        <div id="moduloHistorial"></div>
+    </div>
+
+    <footer>© 2026 - SCSA – Seguridad e Inspección | Autor: Ericson Barillas</footer>
+</div>
+
+<script>
+    const db = {
+        panel: { items: [{t:"Puertas Traseras", i:"p_traseras.jpg"}, {t:"Motor", i:"motor.jpg"}, {t:"Cabina", i:"cabina.jpg"}, {t:"Llantas", i:"llantas.jpg"}] },
+        pickup: { items: [{t:"Parte Baja", i:"baja.jpg"}, {t:"Motor", i:"motor.jpg"}, {t:"Interiores", i:"interior.jpg"}, {t:"Palangana", i:"palangana.jpg"}, {t:"Llantas", i:"llantas.jpg"}] },
+        mulita: { items: [{ t: "Parte Baja", i: "mulita_baja.png" }, { t: "Asientos", i: "mulita_asientos.png" }, { t: "Carretones", i: "mulita_carretones.png" }] },
+        camion: { items: [{t:"Chasis", i:"chasis.jpg"}, {t:"Tanque", i:"tanque.jpg"}, {t:"Cabina", i:"cabina.jpg"}, {t:"Diferencial", i:"dif.jpg"}] },
+        golf: { items: [{t:"Bolsas", i:"bolsas.jpg"}, {t:"Baterías", i:"baterias.jpg"}, {t:"Asientos", i:"asientos.jpg"}] }
+    };
+
+    let seleccionado = null;
+    const mesesNom = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+
+    function iniciarSeleccion(tipo, btn) {
+        seleccionado = tipo;
+        document.querySelectorAll('.btn-tipo').forEach(b => b.classList.remove('activo'));
+        btn.classList.add('activo');
+        document.getElementById('btnGirar').style.display = "block";
+        document.getElementById('resultados').innerHTML = "";
+    }
+
+    function girar() {
+        const resDiv = document.getElementById('resultados');
+        resDiv.innerHTML = "";
+        const pool = db[seleccionado].items;
+        const items = [...pool].sort(() => 0.5 - Math.random()).slice(0, 3);
+        
+        items.forEach((item, index) => {
+            setTimeout(() => {
+                const div = document.createElement('div');
+                div.className = 'carta';
+                div.innerHTML = `<div class="imagen-contenedor"><img src="fotos/${item.i}" onerror="this.src='https://via.placeholder.com/100/f1f5f9/0f172a?text=${item.t}'"></div><div class="carta-info">${item.t}</div>`;
+                resDiv.appendChild(div);
+            }, index * 80);
+        });
+        guardarRegistro(items);
+    }
+
+    function guardarRegistro(items) {
+        const d = new Date();
+        const anio = d.getFullYear();
+        const mes = mesesNom[d.getMonth()];
+        const dia = d.getDate();
+        const hora = d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+        
+        let log = JSON.parse(localStorage.getItem('scsa_final_v1') || "{}");
+        if (!log[anio]) log[anio] = {};
+        if (!log[anio][mes]) log[anio][mes] = {};
+        if (!log[anio][mes][dia]) log[anio][mes][dia] = [];
+        
+        log[anio][mes][dia].unshift({ h: hora, v: seleccionado.toUpperCase(), p: items.map(x => x.t).join(', ') });
+        localStorage.setItem('scsa_final_v1', JSON.stringify(log));
+        
+        if(document.getElementById('moduloHistorial').style.display === "block") renderizarHistorial();
+    }
+
+    function toggleModuloHistorial() {
+        const modulo = document.getElementById('moduloHistorial');
+        const btn = document.getElementById('toggleBtn');
+        if (modulo.style.display === "block") {
+            modulo.style.display = "none";
+            btn.innerText = "Consultar Registros";
+            btn.classList.remove('abierto');
+        } else {
+            modulo.style.display = "block";
+            btn.innerText = "Cerrar Historial";
+            btn.classList.add('abierto');
+            renderizarHistorial();
+        }
+    }
+
+    function renderizarHistorial() {
+        const log = JSON.parse(localStorage.getItem('scsa_final_v1') || "{}");
+        const contenedor = document.getElementById('moduloHistorial');
+        contenedor.innerHTML = "";
+
+        const anios = Object.keys(log).sort((a,b) => b-a);
+        if (anios.length === 0) {
+            contenedor.innerHTML = "<p style='font-size:12px; color:#94a3b8; text-align:center;'>No hay registros aún.</p>";
+            return;
+        }
+
+        anios.forEach(anio => {
+            const divAnio = document.createElement('div');
+            divAnio.className = 'acordeon-item';
+            divAnio.innerHTML = `
+                <div class="acordeon-header" onclick="toggleAcordeon(this)">AÑO ${anio} <span>▼</span></div>
+                <div class="acordeon-cuerpo" id="cuerpo-${anio}"></div>
+            `;
+            contenedor.appendChild(divAnio);
+
+            const cuerpoAnio = document.getElementById(`cuerpo-${anio}`);
+            Object.keys(log[anio]).reverse().forEach(mes => {
+                const divMes = document.createElement('div');
+                divMes.className = 'acordeon-item';
+                divMes.style.border = "none";
+                divMes.innerHTML = `
+                    <div class="acordeon-header" style="background:white; padding:8px 10px;" onclick="toggleAcordeon(this)">${mes.toUpperCase()} <span>▼</span></div>
+                    <div class="acordeon-cuerpo">
+                        <div class="grid-dias">
+                            ${Object.keys(log[anio][mes]).sort((a,b)=>b-a).map(dia => `
+                                <button class="btn-dia" onclick="verData('${anio}','${mes}',${dia},this)">${dia}</button>
+                            `).join('')}
+                        </div>
+                        <div class="detalle-dia" id="det-${anio}-${mes}"></div>
+                    </div>
+                `;
+                cuerpoAnio.appendChild(divMes);
+            });
+        });
+    }
+
+    function toggleAcordeon(header) {
+        const cuerpo = header.nextElementSibling;
+        cuerpo.style.display = (cuerpo.style.display === "block") ? "none" : "block";
+        header.querySelector('span').innerHTML = (cuerpo.style.display === "block") ? "▲" : "▼";
+    }
+
+    function verData(anio, mes, dia, btn) {
+        const log = JSON.parse(localStorage.getItem('scsa_final_v1') || "{}");
+        const datos = log[anio][mes][dia];
+        const panel = document.getElementById(`det-${anio}-${mes}`);
+        
+        btn.parentElement.querySelectorAll('.btn-dia').forEach(b => b.classList.remove('activo'));
+        btn.classList.add('activo');
+        
+        panel.style.display = "block";
+        panel.innerHTML = `
+            <table>
+                <thead>
+                    <tr>
+                        <th class="col-hora">Hora</th>
+                        <th class="col-unidad">Unidad</th>
+                        <th class="col-inspeccion">Áreas Inspeccionadas</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${datos.map(x => `
+                        <tr>
+                            <td class="col-hora">${x.h}</td>
+                            <td class="col-unidad">${x.v}</td>
+                            <td class="col-inspeccion">${x.p}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        `;
+    }
+
+    // REGISTRO DEL SERVICE WORKER (Modo Offline)
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./sw.js')
+                .then(reg => console.log('SW: Listo'))
+                .catch(err => console.log('SW: Error', err));
+        });
+    }
+</script>
+</body>
+</html>
