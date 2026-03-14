@@ -1,0 +1,13 @@
+{
+  "short_name": "SSA",
+  "name": "SSA – Control Aleatorio",
+  "icons": [
+    { "src": "Icono/android-icon-192x192.png", "type": "image/png", "sizes": "192x192" },
+    { "src": "Icono/ms-icon-310x310.png", "type": "image/png", "sizes": "310x310" }
+  ],
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "theme_color": "#001f3f",
+  "background_color": "#f8f7f2"
+}
