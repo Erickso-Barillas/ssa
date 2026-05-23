@@ -328,6 +328,14 @@
         cuerpo.style.display = isVisible ? "none" : "block";
         icono.innerText = isVisible ? "+" : "–";
     }
+    // Registro automático del Service Worker para funcionamiento offline
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./sw.js')
+                .then(reg => console.log('Service Worker: Registrado e Instalado con éxito'))
+                .catch(err => console.log('Service Worker: Falló la instalación', err));
+        });
+    }
 </script>
 </body>
 </html>
