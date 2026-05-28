@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SSA – Sistema de Selección Aleatoria</title>
     
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght=400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/png" sizes="32x32" href="Icono/favicon-32x32.png">
     <link rel="apple-touch-icon" href="Icono/apple-icon-180x180.png">
@@ -14,6 +14,7 @@
     <style>
         :root {
             --primario: #001f3f; 
+            --primario-degradado: #002d5c;
             --acento: #B0C4DE; 
             --fondo: #f8f7f2; 
             --blanco: #ffffff;
@@ -30,54 +31,133 @@
         body { font-family: 'Inter', sans-serif; color: var(--texto); line-height: 1.5; }
 
         .contenedor { 
-            display: flex; flex-direction: column; min-height: 100vh; 
-            max-width: 800px; margin: auto; background: var(--blanco); padding: 25px; box-sizing: border-box; 
-            box-shadow: 0 0 20px rgba(0,0,0,0.05);
+            display: flex; 
+            flex-direction: column; 
+            min-height: 100vh; 
+            max-width: 850px; 
+            margin: auto; 
+            background: var(--blanco); 
+            padding: 25px; 
+            box-sizing: border-box; 
+            box-shadow: 0 0 25px rgba(0,0,0,0.04);
         }
 
         h1 { 
             color: var(--primario); font-size: 20px; text-align: center; 
             text-transform: uppercase; border-bottom: 3px solid var(--acento); 
-            padding-bottom: 15px; margin: 0 0 30px 0; letter-spacing: 1px; font-weight: 800;
+            padding-bottom: 15px; margin: 0 0 25px 0; letter-spacing: 1px; font-weight: 800;
         }
         
-        .selector-unidades { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 25px; }
+        /* Opciones de vehículos: Siempre fijas arriba */
+        .selector-unidades { 
+            display: grid; 
+            grid-template-columns: repeat(2, 1fr); 
+            gap: 12px; 
+            width: 100%;
+            margin-bottom: 15px;
+        }
         
         .btn-tipo { 
-            padding: 20px 10px; font-weight: 700; border: 2px solid var(--borde-suave); 
+            padding: 16px 10px; font-weight: 700; border: 2px solid var(--borde-suave); 
             border-radius: 15px; background: #f1f5f9; color: var(--primario); 
             cursor: pointer; text-transform: uppercase; font-size: 13px; transition: all 0.2s ease;
         }
         .btn-tipo.activo { background: var(--primario); color: var(--blanco); border-color: var(--primario); transform: scale(0.98); }
 
-        .info-tarjeta { 
-            text-align: center; margin-top: 20px; font-weight: 800; color: var(--primario); 
-            text-transform: uppercase; font-size: 18px; display: none; background: var(--acento);
-            padding: 10px; border-radius: 10px;
+        /* ZONA OPERATIVA: Contenedor flexible */
+        .zona-operativa {
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+            justify-content: center; /* Centrado vertical inicial */
         }
-        
+
+        /* Cuando hay resultados, usamos el orden natural del HTML (Info -> Cartas -> Botón Abajo) */
+        .zona-operativa.con-resultados {
+            justify-content: flex-start;
+        }
+
+        .info-tarjeta { 
+            text-align: center; margin: 15px 0 5px 0; font-weight: 800; color: var(--primario); 
+            text-transform: uppercase; font-size: 15px; display: none; background: #e2e8f0;
+            padding: 12px; border-radius: 12px; letter-spacing: 0.5px;
+            animation: appear 0.3s ease-out forwards;
+        }
+
+        /* GRID DE CARTAS: Se renderiza arriba del botón cuando se activa */
         .resultados { 
             display: grid; 
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); 
-            gap: 20px; margin-top: 25px; flex-grow: 1; 
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); 
+            gap: 20px; 
+            margin-top: 15px;
+            align-items: start;
+        }
+
+        /* BOTÓN AZUL: CORREGIDO para aparecer abajo de los resultados */
+        .btn-girar { 
+            width: 100%; 
+            padding: 18px; 
+            font-size: 15px; 
+            font-weight: 800; 
+            background: linear-gradient(135deg, var(--primario) 0%, var(--primario-degradado) 100%); 
+            color: var(--blanco); 
+            border: none; 
+            border-radius: 15px; 
+            cursor: pointer; 
+            display: none; 
+            text-transform: uppercase; 
+            box-shadow: 0 4px 14px rgba(0,31,63,0.25);
+            letter-spacing: 0.7px;
+            animation: appear 0.4s ease-out forwards;
+            margin: 25px 0 15px 0; /* Mayor espacio superior cuando se va hacia abajo */
+        }
+        .btn-girar:active {
+            transform: scale(0.99);
+            box-shadow: 0 2px 6px rgba(0,31,63,0.2);
         }
 
         .carta { 
-            background: var(--blanco); border-radius: 16px; border: 1px solid var(--borde-suave); 
-            overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.08); animation: appear 0.4s ease-out forwards; 
-            display: flex; flex-direction: column;
+            background: var(--blanco); 
+            border-radius: 16px; 
+            border: 1px solid var(--borde-suave); 
+            overflow: hidden; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05); 
+            animation: appear 0.4s ease-out forwards; 
+            display: flex; 
+            flex-direction: column;
+            height: auto;
         }
 
-        .carta-info { padding: 15px 15px 5px 15px; text-align: center; order: 1; }
         .imagen-contenedor { 
-            width: 100%; background: #fff; display: flex; align-items: center; justify-content: center; 
-            overflow: hidden; order: 2; padding-bottom: 15px;
+            width: 100%; 
+            height: 190px; 
+            background: #f8fafc; 
+            display: block;
+            overflow: hidden; 
+            margin: 0;
+            border-bottom: 1px solid var(--borde-suave);
         }
-        .imagen-contenedor img { width: 100%; height: auto; object-fit: cover; display: block; }
+
+        .imagen-contenedor img { 
+            width: 100%; 
+            height: 100%; 
+            object-fit: cover; 
+            display: block; 
+        }
+
+        .carta-info { 
+            padding: 16px; 
+            text-align: center; 
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
 
         .badge-numero { 
-            display: inline-block; color: white; padding: 4px 12px; border-radius: 6px; 
-            font-size: 14px; font-weight: 800; margin-bottom: 8px; 
+            display: inline-block; color: white; padding: 5px 14px; border-radius: 8px; 
+            font-size: 13px; font-weight: 800; margin-bottom: 10px; text-transform: uppercase;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.08);
         }
 
         .area-color-1 { background-color: var(--color-area-1); }
@@ -88,20 +168,31 @@
         .area-color-6 { background-color: var(--color-area-6); }
         .area-color-7 { background-color: var(--color-area-7); color: #000; }
 
-        .descripcion-texto { font-size: 13px; font-weight: 600; text-transform: uppercase; color: var(--texto); }
+        .descripcion-texto { 
+            font-size: 12.5px; 
+            font-weight: 600; 
+            text-transform: uppercase; 
+            color: var(--texto); 
+            min-height: 40px; 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
 
-        .btn-girar { 
-            width: 100%; padding: 22px; font-size: 16px; font-weight: 800; 
-            background: var(--primario); color: var(--blanco); border: none; 
-            border-radius: 16px; margin: 30px 0; cursor: pointer; display: none; 
-            text-transform: uppercase; box-shadow: 0 4px 15px rgba(0,31,63,0.3);
+        /* SECCIÓN INFERIOR */
+        .seccion-inferior {
+            text-align: center; 
+            margin-top: auto; 
+            padding-top: 25px;
+            width: 100%;
         }
 
         .btn-ver-historial { 
             background: transparent; border: 2px solid var(--primario); color: var(--primario); 
             padding: 12px 30px; border-radius: 30px; font-size: 13px; font-weight: 700; 
-            cursor: pointer; text-transform: uppercase; transition: 0.3s;
+            cursor: pointer; text-transform: uppercase; transition: 0.3s; margin-bottom: 15px;
         }
+        .btn-ver-historial:active { background: rgba(0, 31, 63, 0.05); }
 
         .nivel { border: 1.5px solid var(--borde-suave); border-radius: 12px; overflow: hidden; margin-bottom: 12px; }
         .nivel-header { 
@@ -121,8 +212,8 @@
         .unidad-negrita { font-weight: 800; color: var(--primario); display: block; }
         .tarjeta-normal { font-size: 11px; color: #64748b; font-weight: 400; display: block; }
 
-        footer { margin-top: 30px; text-align: center; font-size: 11px; color: #64748b; padding-bottom: 15px; }
-        @keyframes appear { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        footer { margin-top: 25px; text-align: center; font-size: 11px; color: #64748b; padding-bottom: 10px; }
+        @keyframes appear { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
@@ -136,13 +227,16 @@
         <button class="btn-tipo" onclick="iniciarSeleccion('pickup', this)"><b>Pick-up</b></button>
         <button class="btn-tipo" onclick="iniciarSeleccion('tracto', this)"><b>Tracto Remolque</b></button>
     </div>
-
-    <div id="infoTarjeta" class="info-tarjeta"></div>
-    <div id="resultados" class="resultados"></div>
     
-    <button id="btnGirar" class="btn-girar" onclick="seleccionarTarjeta()">Selección Aleatoria de Tarjetas</button>
-
-    <div style="text-align: center; margin-top: auto; padding-top: 20px;">
+    <div id="zonaOperativa" class="zona-operativa">
+        <div id="infoTarjeta" class="info-tarjeta"></div>
+        
+        <div id="resultados" class="resultados"></div>
+        
+        <button id="btnGirar" class="btn-girar" onclick="seleccionarTarjeta()">Selección Aleatoria de Tarjetas</button>
+    </div>
+    
+    <div class="seccion-inferior">
         <button id="toggleBtn" class="btn-ver-historial" onclick="toggleModuloHistorial()">Consultar Registros</button>
         <div id="moduloHistorial"></div>
         <footer>© 2026 - SSA – Seguridad e Inspección | Autor: Ericson Barillas</footer>
@@ -157,7 +251,6 @@
         tracto: { ruta: "Fotos/Tracto remolque", prefijo: "t" }
     };
 
-    // MANTENEMOS ESTA PARTE IGUAL PARA LA INTERFAZ VISUAL
     const areasMaster = {
         suministros: { 1: "Partes a Inspeccionar", 2: "Partes a Inspeccionar", 3: "Partes a Inspeccionar", 4: "Partes a Inspeccionar", 5: "Partes a Inspeccionar", 6: "Partes a Inspeccionar" },
         panel: { 1: "Partes a Inspeccionar", 2: "Partes a Inspeccionar", 3: "Partes a Inspeccionar", 4: "Partes a Inspeccionar", 5: "Partes a Inspeccionar" },
@@ -165,7 +258,6 @@
         tracto: { 1: "Partes a Inspeccionar", 2: "Partes a Inspeccionar", 3: "Partes a Inspeccionar", 4: "Partes a Inspeccionar", 5: "Partes a Inspeccionar", 6: "Partes a Inspeccionar" }
     };
 
-    // NUEVO OBJETO PARA EL HISTORIAL (CONSULTAR REGISTROS)
     const descripcionesDetalladas = {
         suministros: {
             1: "Cavidades de las puertas delanteras, visera para el sol y guantero",
@@ -215,6 +307,10 @@
     function iniciarSeleccion(tipo, btn) {
         vehiculoSeleccionado = tipo;
         ultimaTarjetaIndice = -1;
+        
+        // Al seleccionar tipo, el botón azul vuelve a centrarse esperando la acción del usuario
+        document.getElementById('zonaOperativa').classList.remove('con-resultados');
+        
         document.querySelectorAll('.btn-tipo').forEach(b => b.classList.remove('activo'));
         btn.classList.add('activo');
         document.getElementById('btnGirar').style.display = "block";
@@ -224,6 +320,10 @@
 
     function seleccionarTarjeta() {
         if(!vehiculoSeleccionado) return;
+        
+        // Cambia la alineación de la zona operativa hacia arriba para dar espacio limpio a las cartas
+        document.getElementById('zonaOperativa').classList.add('con-resultados');
+
         const poolTarjetas = tarjetasMaster[vehiculoSeleccionado];
         let indiceAleatorio;
         if (poolTarjetas.length > 1) {
@@ -239,19 +339,21 @@
 
         numerosTarjeta.forEach((num, index) => {
             setTimeout(() => {
-                const nombreArea = areasMaster[vehiculoSeleccionado][num]; // USA TEXTO CORTO
+                const nombreArea = areasMaster[vehiculoSeleccionado][num];
                 const config = configVehiculos[vehiculoSeleccionado];
                 const div = document.createElement('div');
                 div.className = 'carta';
                 div.innerHTML = `
+                    <div class="imagen-contenedor">
+                        <img src="${config.ruta}/${config.prefijo}${num}.png" onerror="this.src='https://via.placeholder.com/300x190?text=Área+${num}'">
+                    </div>
                     <div class="carta-info">
                         <div class="badge-numero area-color-${num}">Área ${num}</div>
                         <div class="descripcion-texto">${nombreArea}</div>
                     </div>
-                    <div class="imagen-contenedor"><img src="${config.ruta}/${config.prefijo}${num}.png" onerror="this.src='https://via.placeholder.com/300?text=Área+${num}'"></div>
                 `;
                 resDiv.appendChild(div);
-            }, index * 100);
+            }, index * 80);
         });
         guardarRegistro(vehiculoSeleccionado, indiceAleatorio + 1, numerosTarjeta);
     }
@@ -261,7 +363,6 @@
         const anio = d.getFullYear(), mes = mesesNom[d.getMonth()], dia = d.getDate();
         const hora = d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
         
-        // AQUÍ ES DONDE USAMOS LAS DESCRIPCIONES DETALLADAS PARA EL LOG
         const areasTexto = indices.map(n => descripcionesDetalladas[vehiculo][n]).join(', ');
 
         let log = JSON.parse(localStorage.getItem('scsa_v4') || "{}");
@@ -328,12 +429,24 @@
         cuerpo.style.display = isVisible ? "none" : "block";
         icono.innerText = isVisible ? "+" : "–";
     }
-    // Registro automático del Service Worker para funcionamiento offline
+
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
             navigator.serviceWorker.register('./sw.js')
-                .then(reg => console.log('Service Worker: Registrado e Instalado con éxito'))
-                .catch(err => console.log('Service Worker: Falló la instalación', err));
+                .then(reg => {
+                    console.log('Service Worker: Registrado.');
+                    reg.onupdatefound = () => {
+                        const installingWorker = reg.installing;
+                        if (installingWorker) {
+                            installingWorker.onstatechange = () => {
+                                if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                    window.location.reload();
+                                }
+                            };
+                        }
+                    };
+                })
+                .catch(err => console.error('Service Worker Error', err));
         });
     }
 </script>

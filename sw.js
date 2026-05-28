@@ -1,4 +1,4 @@
-const CACHE_NAME = 'scsa-v3';
+const CACHE_NAME = 'scsa-v4-cache';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -33,22 +33,52 @@ const ASSETS_TO_CACHE = [
   './Fotos/Tracto%20remolque/t6.png'
 ];
 
+// Instalación: Almacenar recursos estáticos en caché de inmediato
 self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS_TO_CACHE))
+    caches.open(CACHE_NAME)
+      .then(cache => {
+        console.log('Cache abierto correctamente. Descargando recursos offline...');
+        return cache.addAll(ASSETS_TO_CACHE);
+      })
+      .then(() => self.skipWaiting())
   );
 });
 
-self.addEventListener('fetch', event => {
-  event.respondWith(
-    caches.match(event.request).then(response => response || fetch(event.request))
-  );
-});
-
+// Activación: Elimina versiones antiguas de caché para evitar conflictos
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys => Promise.all(
       keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))
-    ))
+    )).then(() => self.clients.claim())
+  );
+});
+
+// Intercepción de Peticiones: Estrategia Estrícta Offline para PWAs
+self.addEventListener('fetch', event => {
+  // Ignorar peticiones que no sean del protocolo http o https (como extensiones de Chrome o esquemas raros)
+  if (!event.request.url.startsWith(self.location.origin)) return;
+
+  event.respondWith(
+    caches.match(event.request).then(cachedResponse => {
+      if (cachedResponse) {
+        // Si el archivo está en caché, lo devuelve instantáneamente y actualiza el caché de fondo si hay red
+        fetch(event.request).then(networkResponse => {
+          if (networkResponse.status === 200) {
+            caches.open(CACHE_NAME).then(cache => cache.put(event.request, networkResponse));
+          }
+        }).catch(() => {/* Ignorar errores de red cuando está offline */});
+        
+        return cachedResponse;
+      }
+
+      // Si no está en caché, va a buscarlo a la red
+      return fetch(event.request).catch(() => {
+        // Si falla la red y se solicita una navegación, redirige al index local
+        if (event.request.mode === 'navigate') {
+          return caches.match('./index.html');
+        }
+      });
+    })
   );
 });
