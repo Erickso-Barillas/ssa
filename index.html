@@ -58,22 +58,39 @@
         
         .resultados { 
             display: grid; 
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); 
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
             gap: 20px; margin-top: 25px; flex-grow: 1; 
+            align-items: start;
         }
 
         .carta { 
             background: var(--blanco); border-radius: 16px; border: 1px solid var(--borde-suave); 
             overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.08); animation: appear 0.4s ease-out forwards; 
-            display: flex; flex-direction: column;
+            display: flex; flex-direction: column; height: 100%;
         }
 
-        .carta-info { padding: 15px 15px 5px 15px; text-align: center; order: 1; }
+        .carta-info { padding: 15px; text-align: center; order: 1; min-height: 70px; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        
+        /* === CONTENEDOR OPTIMIZADO === */
         .imagen-contenedor { 
-            width: 100%; background: #fff; display: flex; align-items: center; justify-content: center; 
-            overflow: hidden; order: 2; padding-bottom: 15px;
+            width: 100%; 
+            height: 280px; /* Define una altura fija estándar para todas las tarjetas */
+            background: #fff; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            order: 2; 
+            padding: 0 10px 15px 10px;
+            box-sizing: border-box;
         }
-        .imagen-contenedor img { width: 100%; height: auto; object-fit: cover; display: block; }
+        
+        /* === AJUSTE DE IMAGEN PARA EVITAR RECORTES === */
+        .imagen-contenedor img { 
+            width: 100%; 
+            height: 100%; 
+            object-fit: contain; /* Ajusta la imagen completa al contenedor sin deformar ni cortar */
+            display: block; 
+        }
 
         .badge-numero { 
             display: inline-block; color: white; padding: 4px 12px; border-radius: 6px; 
@@ -132,7 +149,7 @@
     
     <div class="selector-unidades">
         <button class="btn-tipo" onclick="iniciarSeleccion('suministros', this)"><b>Camión Suministros</b></button>
-        <button class="btn-tipo" onclick="iniciarSeleccion('panel', this)"><b>Tipo Panel</b></button>
+        <button class="btn-tipo" onclick="iniciosSeleccion('panel', this)"><b>Tipo Panel</b></button>
         <button class="btn-tipo" onclick="iniciarSeleccion('pickup', this)"><b>Pick-up</b></button>
         <button class="btn-tipo" onclick="iniciarSeleccion('tracto', this)"><b>Tracto Remolque</b></button>
     </div>
@@ -157,7 +174,6 @@
         tracto: { ruta: "Fotos/Tracto remolque", prefijo: "t" }
     };
 
-    // MANTENEMOS ESTA PARTE IGUAL PARA LA INTERFAZ VISUAL
     const areasMaster = {
         suministros: { 1: "Partes a Inspeccionar", 2: "Partes a Inspeccionar", 3: "Partes a Inspeccionar", 4: "Partes a Inspeccionar", 5: "Partes a Inspeccionar", 6: "Partes a Inspeccionar" },
         panel: { 1: "Partes a Inspeccionar", 2: "Partes a Inspeccionar", 3: "Partes a Inspeccionar", 4: "Partes a Inspeccionar", 5: "Partes a Inspeccionar" },
@@ -165,7 +181,6 @@
         tracto: { 1: "Partes a Inspeccionar", 2: "Partes a Inspeccionar", 3: "Partes a Inspeccionar", 4: "Partes a Inspeccionar", 5: "Partes a Inspeccionar", 6: "Partes a Inspeccionar" }
     };
 
-    // NUEVO OBJETO PARA EL HISTORIAL (CONSULTAR REGISTROS)
     const descripcionesDetalladas = {
         suministros: {
             1: "Cavidades de las puertas delanteras, visera para el sol y guantero",
@@ -237,9 +252,9 @@
         document.getElementById('infoTarjeta').innerText = `Tarjeta Seleccionada: No. ${indiceAleatorio + 1}`;
         document.getElementById('infoTarjeta').style.display = "block";
 
-        numerosTarjeta.forEach((num, index) => {
+        numerasTarjeta.forEach((num, index) => {
             setTimeout(() => {
-                const nombreArea = areasMaster[vehiculoSeleccionado][num]; // USA TEXTO CORTO
+                const nombreArea = areasMaster[vehiculoSeleccionado][num];
                 const config = configVehiculos[vehiculoSeleccionado];
                 const div = document.createElement('div');
                 div.className = 'carta';
@@ -261,7 +276,6 @@
         const anio = d.getFullYear(), mes = mesesNom[d.getMonth()], dia = d.getDate();
         const hora = d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
         
-        // AQUÍ ES DONDE USAMOS LAS DESCRIPCIONES DETALLADAS PARA EL LOG
         const areasTexto = indices.map(n => descripcionesDetalladas[vehiculo][n]).join(', ');
 
         let log = JSON.parse(localStorage.getItem('scsa_v4') || "{}");
@@ -328,11 +342,11 @@
         cuerpo.style.display = isVisible ? "none" : "block";
         icono.innerText = isVisible ? "+" : "–";
     }
-    // Registro automático del Service Worker para funcionamiento offline
+
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
             navigator.serviceWorker.register('./sw.js')
-                .then(reg => console.log('Service Worker: Registrado e Instalado con éxito'))
+                .then(reg => console.log('Service Worker: Registrado con éxito'))
                 .catch(err => console.log('Service Worker: Falló la instalación', err));
         });
     }
